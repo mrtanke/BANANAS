@@ -12,6 +12,12 @@ from naszilla.nas_benchmarks import Nasbench101, Nasbench201, Nasbench301
 from naszilla.nas_algorithms import run_nas_algorithm
 
 def run_experiments(args, save_dir):
+    """
+    Run NAS algorithms based on the provided arguments and save the results.
+    Args:
+        args: Parsed command-line arguments containing experiment configurations.
+        save_dir: Directory to save the experiment results.
+    """
 
     # set up arguments
     trials = args.trials
@@ -26,9 +32,10 @@ def run_experiments(args, save_dir):
     num_algos = len(algorithm_params)
     logging.info(algorithm_params)
 
-    # set up search space
-    mp = copy.deepcopy(metann_params)
+    # deep copy of metann_params for each algorithm
+    mp = copy.deepcopy(metann_params) # a dict of surrogate model hyperparameters (epochs, batch size, etc)
 
+    # initialize search space
     if ss == 'nasbench_101':
         search_space = Nasbench101(mf=mf)
     elif ss == 'nasbench_201':
@@ -39,12 +46,14 @@ def run_experiments(args, save_dir):
         print('Invalid search space')
         raise NotImplementedError()
 
+    # Outer loop: Repeat the whole comparison for multiple trials times
     for i in range(trials):
         results = []
         val_results = []
         walltimes = []
         run_data = []
 
+        # Inner loop: run each NAS algorithm (random, evolution, bananas, etc)
         for j in range(num_algos):
             print('\n* Running NAS algorithm: {}'.format(algorithm_params[j]))
             starttime = time.time()
@@ -54,7 +63,7 @@ def run_experiments(args, save_dir):
             result = np.round(result, 5)
             val_result = np.round(val_result, 5)
 
-            # remove unnecessary dict entries that take up space
+            # remove unnecessary dict entries that take up space,
             for d in run_datum:
                 if not save_specs:
                     d.pop('spec')
@@ -105,6 +114,19 @@ def main(args):
     
 
 if __name__ == "__main__":
+    """
+    The function of each argument:
+    --trials: number of trials to run the NAS algorithm
+    --queries: number of queries/evaluations each NAS algorithm gets
+    --search_space: which NAS benchmark to use (nasbench_101, nasbench_201, or nasbench_301), default 'nasbench_101'
+    --dataset: which dataset to use (cifar10, 100, or imagenet for nasbench201), default 'cifar10'
+    --mf: whether to use multi-fidelity (only for nasbench101), means using different epochs for training, default false
+    --metann_params: which parameters to use for the meta neural net surrogate model, predefined options are 'standard' and 'diverse', default 'standard'
+    --algo_params: which parameters to use for the NAS algorithm, default 'simple_algos'
+    --output_filename: name of output files, default 'round'
+    --save_dir: name of save directory, default 'results_output'
+    --save_specs: whether to save the architecture specs in the output files, default false
+    """
     parser = argparse.ArgumentParser(description='Args for BANANAS experiments')
     parser.add_argument('--trials', type=int, default=500, help='Number of trials')
     parser.add_argument('--queries', type=int, default=150, help='Max number of queries/evaluations each NAS algorithm gets')

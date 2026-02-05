@@ -15,7 +15,7 @@ from naszilla.gcn.model import NeuralPredictor
 from naszilla.gcn.train_gcn import fit, predict
 
 # default parameters for the NAS algorithms
-DEFAULT_NUM_INIT = 10
+DEFAULT_NUM_INIT = 10 # number of initial random architectures
 DEFAULT_K = 10
 DEFAULT_TOTAL_QUERIES = 150
 DEFAULT_LOSS = 'val_loss'
@@ -160,27 +160,29 @@ def evolution_search(search_space,
         query += 1
     return data
 
-def bananas(search_space, 
-            metann_params,
-            num_init=DEFAULT_NUM_INIT, 
-            k=DEFAULT_K, 
-            loss=DEFAULT_LOSS,
-            total_queries=DEFAULT_TOTAL_QUERIES, 
-            num_ensemble=5, 
-            acq_opt_type='mutation',
-            num_arches_to_mutate=1,
-            max_mutation_rate=1,
-            explore_type='its',
-            predictor='bananas',
-            predictor_encoding='trunc_path',
-            cutoff=0,
-            mutate_encoding='adj',
-            random_encoding='adj',
-            deterministic=True,
-            verbose=1):
+def bananas(search_space, # NAS search space object, including query_arch, get_candidates, etc methods
+            metann_params, # dict of meta neural net hyperparameters
+            num_init=DEFAULT_NUM_INIT, # number of initial random architectures
+            k=DEFAULT_K, # number of architectures to query at each iteration
+            loss=DEFAULT_LOSS, # loss to optimize
+            total_queries=DEFAULT_TOTAL_QUERIES,  # total number of architectures to query
+            num_ensemble=5, # number of neural networks in the ensemble to compute uncertainty
+            acq_opt_type='mutation', # how to generate candidate architectures
+            num_arches_to_mutate=1, # number of architectures to mutate when acq_opt_type=='mutation'
+            max_mutation_rate=1, # maximum mutation rate for mutated architectures
+            explore_type='its', # acquisition function to score candidate architectures
+            predictor='bananas', # type of neural predictor
+            predictor_encoding='trunc_path', # encoding used by the neural predictor
+            cutoff=0, # cutoff for dataset generation and querying
+            mutate_encoding='adj', # encoding used to mutate architectures
+            random_encoding='adj', # encoding used to generate random architectures
+            deterministic=True, # whether to use deterministic loss evaluations
+            verbose=1): # verbosity level
     """
     Bayesian optimization with a neural predictor
     """
+
+    # generate the initial training data, consisting of num_init architectures
     data = search_space.generate_random_dataset(num=num_init, 
                                                 predictor_encoding=predictor_encoding, 
                                                 random_encoding=random_encoding,
@@ -205,6 +207,7 @@ def bananas(search_space,
                                                  deterministic_loss=deterministic,
                                                  cutoff=cutoff)
 
+        # candidate encodings
         xcandidates = np.array([c['encoding'] for c in candidates])
         candidate_predictions = []
 

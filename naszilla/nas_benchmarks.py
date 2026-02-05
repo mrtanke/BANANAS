@@ -332,6 +332,9 @@ class Nasbench101(Nasbench):
         return cells
 
     def get_nbhd(self, arch, mutate_encoding='adj'):
+        """
+        BANANAS's practical Acquisition optimization step 
+        """
         return Cell101(**arch).get_neighborhood(self.nasbench, 
                                                 mutate_encoding=mutate_encoding,
                                                 index_hash=self.index_hash)
